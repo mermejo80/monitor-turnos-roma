@@ -1,1 +1,99 @@
+name: Monitor de turnos
+
+on:
+  schedule:
+    # GitHub permite como mínimo una ejecución cada cinco minutos.
+    - cron: "2/5 * * * *"
+  workflow_dispatch:
+    inputs:
+      enviar_prueba:
+        description: "Enviar una notificación de prueba por Telegram"
+        required: true
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: monitor-turnos
+  cancel-in-progress: false
+
+jobs:
+  comprobar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+    steps:
+      - name: Descargar el monitor
+        uses: actions/checkout@v4
+
+      - name: Preparar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Instalar Playwright
+        run: npm install --omit=dev
+
+      - name: Enviar prueba manual
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.enviar_prueba }}
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          NOTIFICATION_TYPE: test
+        run: node notificar.js
+
+      - name: Comprobar la página
+        id: check
+        run: node monitor.js
+
+      - name: Avisar inmediatamente si hay turno
+        if: ${{ steps.check.outputs.status == 'disponible' }}
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          NOTIFICATION_TYPE: disponible
+          NOTIFICATION_DETAIL: ${{ steps.check.outputs.detail }}
+        run: node notificar.js
+
+      - name: Obtener el día para limitar avisos técnicos
+        if: ${{ steps.check.outputs.status == 'cambio' || steps.check.outputs.status == 'error' }}
+        id: day
+        run: echo "value=$(date -u +%F)" >> "$GITHUB_OUTPUT"
+
+      - name: Comprobar si el problema ya fue avisado hoy
+        if: ${{ steps.check.outputs.status == 'cambio' || steps.check.outputs.status == 'error' }}
+        id: problem-cache
+        uses: actions/cache/restore@v4
+        with:
+          path: .monitor-alerta-enviada
+          key: problema-${{ steps.day.outputs.value }}-${{ steps.check.outputs.status }}
+
+      - name: Avisar cambio o error
+        if: ${{ (steps.check.outputs.status == 'cambio' || steps.check.outputs.status == 'error') && steps.problem-cache.outputs.cache-hit != 'true' }}
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          NOTIFICATION_TYPE: ${{ steps.check.outputs.status }}
+          NOTIFICATION_DETAIL: ${{ steps.check.outputs.detail }}
+        run: |
+          node notificar.js
+          mkdir -p .monitor-alerta-enviada
+          date -u > .monitor-alerta-enviada/ultima.txt
+
+      - name: Recordar el aviso técnico hasta mañana
+        if: ${{ (steps.check.outputs.status == 'cambio' || steps.check.outputs.status == 'error') && steps.problem-cache.outputs.cache-hit != 'true' }}
+        uses: actions/cache/save@v4
+        with:
+          path: .monitor-alerta-enviada
+          key: problema-${{ steps.day.outputs.value }}-${{ steps.check.outputs.status }}
+
+      - name: Guardar captura si se detectó un cambio
+        if: ${{ steps.check.outputs.status == 'disponible' || steps.check.outputs.status == 'cambio' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: captura-${{ github.run_id }}
+          path: "*.png"
+          retention-days: 3
+          if-no-files-found: ignore
 
