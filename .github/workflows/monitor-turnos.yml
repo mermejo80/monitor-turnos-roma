@@ -47,6 +47,15 @@ jobs:
         id: check
         run: node monitor.js
 
+      - name: Responder consultas recibidas por Telegram
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          NOTIFICATION_TYPE: comandos
+          CHECK_STATUS: ${{ steps.check.outputs.status }}
+          CHECK_DETAIL: ${{ steps.check.outputs.detail }}
+        run: node notificar.js
+
       - name: Avisar inmediatamente si hay turno
         if: ${{ steps.check.outputs.status == 'disponible' }}
         env:
@@ -96,4 +105,3 @@ jobs:
           path: "*.png"
           retention-days: 3
           if-no-files-found: ignore
-
