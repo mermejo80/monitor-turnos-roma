@@ -1,0 +1,13 @@
+{
+  "name": "monitor-turnos-online",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Monitor online de turnos con GitHub Actions y Telegram",
+  "scripts": {
+    "check": "node monitor.js",
+    "notify": "node notificar.js"
+  },
+  "dependencies": {
+    "playwright-core": "^1.55.0"
+  }
+}

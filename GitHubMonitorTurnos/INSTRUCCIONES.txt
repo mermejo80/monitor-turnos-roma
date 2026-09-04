@@ -1,0 +1,74 @@
+MONITOR ONLINE CON GITHUB Y TELEGRAM
+====================================
+
+PARTE 1 - CREAR EL BOT DE TELEGRAM
+-----------------------------------
+1. Abre Telegram y busca exactamente: @BotFather
+2. Pulsa Iniciar y envía: /newbot
+3. Escribe un nombre para el bot.
+4. Escribe otro nombre terminado en "bot", por ejemplo: TurnosRomaMiBot
+5. BotFather te dará un TOKEN. Guárdalo de forma privada.
+6. Abre el nuevo bot y pulsa Iniciar o envíale cualquier mensaje.
+
+PARTE 2 - OBTENER TU CHAT ID
+-----------------------------
+1. Sustituye TOKEN en esta dirección por el token recibido:
+   https://api.telegram.org/botTOKEN/getUpdates
+2. Abre la dirección en el navegador.
+3. Busca algo parecido a: "chat":{"id":123456789
+4. Ese número es tu CHAT ID. Guárdalo.
+
+No publiques ni envíes a otras personas el TOKEN del bot.
+
+PARTE 3 - CREAR EL REPOSITORIO EN GITHUB
+-----------------------------------------
+1. Entra en https://github.com y crea una cuenta si todavía no tienes una.
+2. Pulsa el signo + de la esquina superior derecha y elige "New repository".
+3. Nombre sugerido: monitor-turnos-roma
+4. Selecciona "Public" para que las ejecuciones estándar sean gratuitas.
+   El código será público, pero el token y el Chat ID permanecerán secretos.
+5. Pulsa "Create repository".
+6. En la página del repositorio elige "uploading an existing file".
+7. Sube TODO el contenido de esta carpeta, incluida la carpeta oculta .github.
+   Es importante subir los archivos contenidos, no una carpeta ZIP.
+8. Pulsa "Commit changes".
+
+PARTE 4 - GUARDAR LAS DOS CLAVES PRIVADAS
+------------------------------------------
+1. Dentro del repositorio abre "Settings".
+2. En la izquierda: "Secrets and variables" -> "Actions".
+3. Pulsa "New repository secret".
+4. Crea el secreto:
+      Name: TELEGRAM_BOT_TOKEN
+      Secret: pega el token completo entregado por BotFather
+5. Crea otro secreto:
+      Name: TELEGRAM_CHAT_ID
+      Secret: pega el número de Chat ID
+
+PARTE 5 - ACTIVAR Y PROBAR
+---------------------------
+1. Abre la pestaña "Actions" del repositorio.
+2. Si aparece una pregunta, pulsa "I understand my workflows, go ahead...".
+3. En la izquierda selecciona "Monitor de turnos".
+4. Pulsa "Run workflow" y confirma otra vez con "Run workflow".
+5. En aproximadamente uno o dos minutos recibirás en Telegram:
+   "PRUEBA CORRECTA".
+
+A partir de ese momento GitHub comprobará la página automáticamente cada cinco
+minutos. La computadora puede permanecer apagada.
+
+COMPORTAMIENTO DE LAS NOTIFICACIONES
+-------------------------------------
+- Turno disponible: alerta en cada comprobación mientras siga disponible.
+- Página cambiada: aviso diferente, como máximo una vez al día.
+- Error técnico: aviso diferente, como máximo una vez al día.
+- Sin disponibilidad: no envía mensajes.
+
+IMPORTANTE
+----------
+- GitHub puede retrasar ocasionalmente una comprobación algunos minutos.
+- En repositorios públicos, GitHub desactiva las tareas programadas después de
+  60 días sin actividad. Si ocurre, entra en Actions y vuelve a habilitarla.
+- Para detenerlo: Actions -> Monitor de turnos -> botón de tres puntos ->
+  Disable workflow.
+- Nunca escribas el token directamente dentro de monitor.js o notificar.js.
